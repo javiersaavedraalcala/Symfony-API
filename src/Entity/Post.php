@@ -3,12 +3,33 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post as Store;
 use App\Repository\PostRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Patch(),
+        new Store(),
+    ],
+    paginationItemsPerPage: 8
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'title'         => 'partial', //exact, partial, start, end, word_start
+    'body'          => 'partial',
+    'category.name' => 'partial'
+])]
+#[ApiFilter(OrderFilter::class, properties: ['id'])]
 class Post
 {
     #[ORM\Id]
@@ -46,6 +67,11 @@ class Post
     public function getBody(): ?string
     {
         return $this->body;
+    }
+
+    public function getSummary(): ?string
+    {
+        return mb_substr($this->body, 0, 70) . ' [...]';
     }
 
     public function setBody(string $body): static
